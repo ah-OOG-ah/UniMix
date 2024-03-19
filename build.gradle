@@ -498,29 +498,35 @@ publishing {
             }
 
 			pom {
-				description = 'Fabric Mixin is a trait/mixin and bytecode weaving framework for Java using ASM.'
-				url = 'https://github.com/FabricMC/Mixin'
+				description = 'LegacyModdingMC fork of Fabric Mixin, a trait/mixin and bytecode weaving framework for Java using ASM.'
+				url = 'https://github.com/LegacyModdingMC/UniMix'
 
 				scm {
-					connection = "scm:git:https://github.com/FabricMC/Mixin.git"
-					developerConnection = "scm:git:git@github.com:FabricMC/Mixin.git"
-					url = "https://github.com/FabricMC/Mixin"
+					connection = "scm:git:https://github.com/LegacyModdingMC/UniMix.git"
+					developerConnection = "scm:git:git@github.com:LegacyModdingMC/UniMix.git"
+					url = "https://github.com/LegacyModdingMC/UniMix"
 				}
 
 				issueManagement {
 					system = "GitHub"
-					url = "https://github.com/FabricMC/Mixin/issues"
+					url = "https://github.com/LegacyModdingMC/UniMix/issues"
 				}
 
 				licenses {
 					license {
 						name = 'The MIT License'
-						url = 'https://raw.githubusercontent.com/FabricMC/Mixin/main/LICENSE.txt'
+						url = 'https://raw.githubusercontent.com/LegacyModdingMC/UniMix/main/LICENSE.txt'
 					}
 				}
 
 				developers {
 					// Et. al. that arent in the fabric org on maven central
+
+					developer {
+						id = "makamys"
+						name = "makamys"
+						email = "makamys@outlook.com"
+					}
 
 					developer {
 						id = "modmuss50"
