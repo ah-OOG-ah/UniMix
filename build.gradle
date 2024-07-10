@@ -6,13 +6,13 @@ buildscript {
     }
     dependencies {
         classpath 'gradle.plugin.com.hierynomus.gradle.plugins:license-gradle-plugin:0.16.1'
-        classpath 'gradle.plugin.com.github.jengelman.gradle.plugins:shadow:7.0.0'
-        classpath 'com.guardsquare:proguard-gradle:' + (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_11) ? '7.2.0' : '7.1.0')
+        classpath 'com.guardsquare:proguard-gradle:' + (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_11) ? '7.5.0' : '7.1.0')
     }
 }
 
 plugins {
-	id "me.modmuss50.remotesign" version "0.4.0"
+    id "me.modmuss50.remotesign" version "0.4.0"
+    id "io.github.goooler.shadow"  version "8.1.7"
 }
 
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
@@ -24,7 +24,6 @@ apply plugin: 'checkstyle'
 apply plugin: 'maven-publish'
 apply plugin: 'eclipse'
 apply plugin: 'idea'
-apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'potemkin-modules'
 
 // Default tasks
@@ -32,9 +31,11 @@ defaultTasks 'licenseFormat', 'check', 'build'
 
 // Basic project information
 group = 'io.github.legacymoddingmc'
-archivesBaseName = 'sponge-mixin'
 version = buildVersion + "+mixin." + upstreamMixinVersion
 
+base {
+    archivesName = 'sponge-mixin'
+}
 
 def ENV = System.getenv()
 if (!ENV.CI) {
@@ -50,12 +51,13 @@ ext.packaging = 'jar'
 ext.asmVersion = project.hasProperty("asmVersion") ? asmVersion : '9.0'
 ext.legacyForgeAsmVersion = project.hasProperty("legacyForgeAsmVersion") ? asmVersion : '5.0.3'
 
-// Minimum version of Java required
-sourceCompatibility = '1.8'
-targetCompatibility = '1.8'
-
 java {
     modularity.inferModulePath = false
+    disableAutoTargetJvm()
+
+    // Minimum version of Java required
+    sourceCompatibility = '1.8'
+    targetCompatibility = '1.8'
 }
 
 // Project repositories
@@ -71,40 +73,20 @@ repositories {
     }
     maven {
         // For modlauncher
-        name = 'forge'
-        url = 'https://files.minecraftforge.net/maven'
-    }
-}
-
-configurations {
-    stagingJar
-    
-    exampleImplementation       .extendsFrom implementation
-    fernflowerImplementation    .extendsFrom implementation
-    launchwrapperImplementation .extendsFrom implementation
-    agentImplementation         .extendsFrom implementation
-    modlauncherImplementation   .extendsFrom implementation
-    modlauncher9Implementation  .extendsFrom modlauncherImplementation
-    modularityImplementation    .extendsFrom modlauncher9Implementation
-    modularityCompileOnly       .extendsFrom compileOnly
-
-    proguard {
-        extendsFrom fernflowerImplementation
-        extendsFrom launchwrapperImplementation
-        extendsFrom modlauncherImplementation
-        extendsFrom compileClasspath
+        name = 'neoforged'
+        url = 'https://maven.neoforged.net/releases'
     }
 }
 
 sourceSets {
     legacy {
         ext.languageVersion = 8
-        ext.compatibility = '1.6'
+        ext.compatibility = '1.8'
     }
     main {
         compileClasspath += legacy.output
         ext.languageVersion = 8
-        ext.compatibility = '1.6'
+        ext.compatibility = '1.8'
     }
     ap {
         compileClasspath += main.output
@@ -114,13 +96,13 @@ sourceSets {
     fernflower {
         compileClasspath += main.output
         ext.languageVersion = 8
-        ext.compatibility = '1.6'
+        ext.compatibility = '1.8'
         ext.modularityExcluded = true
     }
     agent {
         compileClasspath += main.output
         ext.languageVersion = 8
-        ext.compatibility = '1.6'
+        ext.compatibility = '1.8'
     }
     bridge {
         compileClasspath += main.output
@@ -162,6 +144,26 @@ sourceSets {
         ext.modularityExcluded = true // don't add ourselves
     }
     modularityDummy {}
+}
+
+configurations {
+    stagingJar
+
+    exampleImplementation       .extendsFrom implementation
+    fernflowerImplementation    .extendsFrom implementation
+    launchwrapperImplementation .extendsFrom implementation
+    agentImplementation         .extendsFrom implementation
+    modlauncherImplementation   .extendsFrom implementation
+    modlauncher9Implementation  .extendsFrom modlauncherImplementation
+    modularityImplementation    .extendsFrom modlauncher9Implementation
+    modularityCompileOnly       .extendsFrom compileOnly
+
+    proguard {
+        extendsFrom fernflowerImplementation
+        extendsFrom launchwrapperImplementation
+        extendsFrom modlauncherImplementation
+        extendsFrom compileClasspath
+    }
 }
 
 // Because Mixin aims to support a variety of environments, we have to be able to run with older versions of GSON and Guava that lack official module
@@ -226,7 +228,7 @@ dependencies {
     modlauncher9Implementation ("cpw.mods:modlauncher:$modlauncherVersion") {
         exclude module: 'jopt-simple'
     }
-    modlauncher9Implementation 'cpw.mods:securejarhandler:0.9.+'
+    modlauncher9Implementation 'cpw.mods:securejarhandler:2.1.24'
     
     // asm bridge
     bridgeImplementation 'org.apache.logging.log4j:log4j-core:2.0-beta9'
@@ -243,11 +245,11 @@ javadoc {
     source sourceSets.ap.allJava
     options.encoding = 'UTF-8'
     exclude {
-        it.relativePath.file && it.relativePath.pathString =~ 'tools' && !(it.name =~ /SuppressedBy|package-info/) }
+        it.relativePath.file && it.relativePath.pathString =~ 'tools' && !(it.name =~ /SuppressedBy|package-info/)
+    }
     options {
         docTitle 'Welcome to the Mixin Javadoc'
         overview 'docs/javadoc/overview.html'
-        stylesheetFile file('docs/javadoc/mixin.css')
         addBooleanOption '-allow-script-in-comments', true
     }
     doLast {
@@ -320,7 +322,7 @@ checkstyle {
         "year"        : project.inceptionYear
     ]
     configFile = file("checkstyle.xml")
-    toolVersion = '8.44'
+    toolVersion = '10.17.0'
 }
 
 // Source compiler configuration
@@ -333,10 +335,8 @@ tasks.withType(JavaCompile) {
 def modularityInputs = objects.fileCollection()
 
 project.sourceSets.each { set -> {
-    if (set.ext.has("languageVersion")) {
-        project.tasks[set.compileJavaTaskName].javaCompiler = javaToolchains.compilerFor {
-            languageVersion = JavaLanguageVersion.of(set.ext.languageVersion)
-        }
+    if (set.ext.has("languageVersion") && JavaVersion.current().isJava9Compatible()) {
+        project.tasks[set.compileJavaTaskName].options.release = set.ext.languageVersion
     } 
     if (set.ext.has("compatibility")) {
         project.tasks[set.compileJavaTaskName].sourceCompatibility = set.ext.compatibility
@@ -439,7 +439,7 @@ task sourceJar(type: Jar) {
 }
 
 task javadocJar(type: Jar, dependsOn: javadoc) {
-	from javadoc.destinationDir
+    from javadoc.destinationDir
     archiveClassifier = "javadoc"
 }
 
@@ -464,7 +464,7 @@ publishing {
     publications {
         developer(MavenPublication) { publication ->
             groupId project.group
-            artifactId project.archivesBaseName
+            artifactId project.base.archivesName.get()
             version project.version
 
             artifact sourceJar
@@ -519,8 +519,8 @@ publishing {
 					}
 				}
 
-				developers {
-					// Et. al. that arent in the fabric org on maven central
+                developers {
+                    // Et. al. that arent in the fabric org on maven central
 
 					developer {
 						id = "makamys"
@@ -534,13 +534,13 @@ publishing {
 						email = "modmuss50@fabricmc.net"
 					}
 
-					developer {
-						id = "sfPlayer"
-						name = "Player"
-						email = "player@fabricmc.net"
-					}
-				}
-			}
+                    developer {
+                        id = "sfPlayer"
+                        name = "Player"
+                        email = "player@fabricmc.net"
+                    }
+                }
+            }
         }
     }
 
@@ -555,24 +555,24 @@ publishing {
             }
         }
 
-		if (ENV.MAVEN_CENTRAL_URL) {
-			repositories.maven {
-				name "central"
-				url ENV.MAVEN_CENTRAL_URL
-				credentials {
-					username ENV.MAVEN_CENTRAL_USERNAME
-					password ENV.MAVEN_CENTRAL_PASSWORD
-				}
-			}
-		}
+        if (ENV.MAVEN_CENTRAL_URL) {
+            repositories.maven {
+                name "central"
+                url ENV.MAVEN_CENTRAL_URL
+                credentials {
+                    username ENV.MAVEN_CENTRAL_USERNAME
+                    password ENV.MAVEN_CENTRAL_PASSWORD
+                }
+            }
+        }
     }
 }
 
 remoteSign {
-	requestUrl = ENV.SIGNING_SERVER
-	pgpAuthKey = ENV.SIGNING_PGP_KEY
-	useDummyForTesting = ENV.SIGNING_SERVER == null
-	sign publishing.publications.developer
+    requestUrl = ENV.SIGNING_SERVER
+    pgpAuthKey = ENV.SIGNING_PGP_KEY
+    useDummyForTesting = ENV.SIGNING_SERVER == null
+    sign publishing.publications.developer
 }
 
 // A task to ensure that the version being released has not already been released.
