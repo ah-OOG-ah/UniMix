@@ -72,6 +72,11 @@ public final class GlobalProperties {
             
             return this.key = service.resolveKey(this.name);
         }
+        
+        @Override
+        public String toString() {
+            return this.name;
+        }
 
         /**
          * Get or create a new global property key
@@ -92,13 +97,6 @@ public final class GlobalProperties {
             return key;
         }
 
-        /* (non-Javadoc)
-         * @see java.lang.Object#toString()
-         */
-        @Override
-        public String toString() {
-            return this.name;
-        }
     }
     
     private static IGlobalPropertyService service;
