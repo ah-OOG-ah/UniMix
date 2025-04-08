@@ -833,6 +833,8 @@ class MixinInfo implements Comparable<MixinInfo>, IMixinInfo {
      */
     private transient State state;
 
+    private static final boolean LEYDEN_REPLAY = true; //Boolean.getBoolean(System.getProperty("mixin.replay", "false"));
+
     /**
      * Internal ctor, called by {@link MixinConfig}
      * 
@@ -942,11 +944,17 @@ class MixinInfo implements Comparable<MixinInfo>, IMixinInfo {
                 continue;
             }
             if (tracker != null && tracker.isClassLoaded(declaredTarget.name) && !this.isReloading()) {
-                String message = String.format("Critical problem: %s target %s was loaded too early.", this, declaredTarget.name);
-                if (this.parent.isRequired()) {
+                String message = LEYDEN_REPLAY ?
+                        String.format("Warning: %s target %s was loaded too early", this, declaredTarget.name)
+                        : String.format("Critical problem: %s target %s was loaded too early.", this, declaredTarget.name);
+                if (this.parent.isRequired() && !LEYDEN_REPLAY) {
                     throw new MixinTargetAlreadyLoadedException(this, message, declaredTarget.name);
                 }
-                this.logger.error(message);
+                if (LEYDEN_REPLAY) {
+                    this.logger.warn(message);
+                } else {
+                    this.logger.error(message);
+                }
             }
             
             if (this.shouldApplyMixin(ignorePlugin, declaredTarget.name)) {
